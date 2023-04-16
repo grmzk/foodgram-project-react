@@ -2,7 +2,7 @@ from django.db import models
 
 from users.models import User
 
-from .validators import min_cooking_time_validator, color_hex_validator
+from .validators import color_hex_validator, min_cooking_time_validator
 
 
 class Tag(models.Model):
@@ -25,6 +25,14 @@ class Tag(models.Model):
         unique=True,
         blank=False,
     )
+
+    class Meta:
+        verbose_name = 'Тег'
+        verbose_name_plural = 'Теги'
+        ordering = ['slug']
+
+    def __str__(self):
+        return f'{self.slug} [{self.name}]'
 
 
 class Recipe(models.Model):
@@ -60,7 +68,24 @@ class Recipe(models.Model):
         related_name='recipes',
         blank=False
     )
+    in_shopping_cart = models.ManyToManyField(
+        User,
+        verbose_name='В списке покупок',
+        related_name='shopping_cart',
+        blank=True,
+    )
+    in_favorite = models.ManyToManyField(
+        User,
+        verbose_name='В избранном',
+        related_name='favorite',
+        blank=True,
+    )
     # ingredients = None
-    # favorite = None
-    # in_shopping_cart = None
 
+    class Meta:
+        verbose_name = 'Рецепт'
+        verbose_name_plural = 'Рецепты'
+        ordering = ['name']
+
+    def __str__(self):
+        return f'Рецепт "{self.name}"'
