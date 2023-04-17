@@ -2,8 +2,9 @@ from django.contrib import admin
 
 from recipes.models import Recipe, Tag
 
-from .models import User
+from .models import Subscription, User
 
-admin.site.register(Recipe)
-admin.site.register(Tag)
 admin.site.register(User)
+admin.site.register(Subscription)
+admin.site.register(Tag)
+admin.site.register(Recipe)
