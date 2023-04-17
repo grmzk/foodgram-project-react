@@ -157,11 +157,16 @@ class Recipe(models.Model):
         related_name='recipes',
         blank=True,
     )
+    pub_date = models.DateTimeField(
+        verbose_name='Дата публикации',
+        auto_now_add=True,
+        db_index=True,
+    )
 
     class Meta:
         verbose_name = 'Рецепт'
         verbose_name_plural = 'Рецепты'
-        ordering = ['name']
+        ordering = ['-pub_date']
 
     def __str__(self):
         return f'Рецепт "{self.name}"'
