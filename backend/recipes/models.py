@@ -89,3 +89,42 @@ class Recipe(models.Model):
 
     def __str__(self):
         return f'Рецепт "{self.name}"'
+
+
+class MeasurementUnit(models.Model):
+    name = models.CharField(
+        verbose_name='Единица измерения',
+        max_length=200,
+        blank=False,
+    )
+
+    class Meta:
+        verbose_name = 'Единица измерения'
+        verbose_name_plural = 'Единицы измерения'
+        ordering = ['name']
+
+    def __str__(self):
+        return f'{self.name}'
+
+
+class Ingredient(models.Model):
+    name = models.CharField(
+        verbose_name='Название ингредиента',
+        max_length=200,
+        blank=False,
+    )
+    measurement_unit = models.ForeignKey(
+        MeasurementUnit,
+        verbose_name='Единица измерения',
+        related_name='ingredients',
+        on_delete=models.CASCADE,
+        blank=False,
+    )
+
+    class Meta:
+        verbose_name = 'Ингредиент'
+        verbose_name_plural = 'Ингредиенты'
+        ordering = ['name']
+
+    def __str__(self):
+        return f'{self.name}'
