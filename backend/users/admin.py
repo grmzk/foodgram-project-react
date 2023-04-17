@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from recipes.models import Ingredient, MeasurementUnit, Recipe, Tag
+from recipes.models import (Ingredient, IngredientAmount, MeasurementUnit,
+                            Recipe, Tag)
 
 from .models import Subscription, User
 
@@ -10,3 +11,4 @@ admin.site.register(Tag)
 admin.site.register(Recipe)
 admin.site.register(MeasurementUnit)
 admin.site.register(Ingredient)
+admin.site.register(IngredientAmount)

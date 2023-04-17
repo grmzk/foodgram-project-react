@@ -4,6 +4,10 @@ min_cooking_time_validator = MinValueValidator(
     limit_value=1,
     message='Время приготовления не может быть меньше 1 минуты!'
 )
+min_amount_validator = MinValueValidator(
+    limit_value=1,
+    message='Количество не может быть меньше 1!'
+)
 color_hex_validator = RegexValidator(
     regex=r'^#[0-9A-F]{,6}$',
     message='Нужен HEX-код, который должен начинаться с символа # '
