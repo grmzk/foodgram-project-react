@@ -1,9 +1,10 @@
-from rest_framework import pagination, permissions, viewsets
+from rest_framework import permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from users.models import User
 
+from .paginations import PageNumberLimitPagination
 from .serializers import UserSerializer, UserSetPasswordSerializer
 
 
@@ -11,7 +12,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     http_method_names = ['get', 'post']
-    pagination_class = pagination.PageNumberPagination
+    pagination_class = PageNumberLimitPagination
 
     @action(detail=False, methods=['GET'], url_path='me',
             permission_classes=[permissions.IsAuthenticated])
