@@ -39,7 +39,7 @@ class TagsTests(APITestCase):
         ]
         for finding_tag in finding_tags:
             with self.subTest(finding_tag=finding_tag):
-                results = response.data.items()
+                results = response.data
                 field_name = 'slug'
                 while True:
                     found = None
@@ -54,13 +54,13 @@ class TagsTests(APITestCase):
                               'not found in response\'s results!')
 
     def test_detail_result_keys(self):
-        tag_id = 0
+        tag_id = self.tags[0].id
         response = self.client.get(f'{self.URL}{tag_id}/')
         keys = ['id', 'name', 'slug', 'color']
         self.assertCountEqual(response.data.keys(), keys)
 
     def test_detail_result_values(self):
-        tag_id = 0
+        tag_id = self.tags[0].id
         response = self.client.get(f'{self.URL}{tag_id}/')
         tag = Tag.objects.get(id=tag_id)
         keys = ['id', 'name', 'slug', 'color']
@@ -68,3 +68,8 @@ class TagsTests(APITestCase):
         for key in keys:
             tag_dict[key] = getattr(tag, key)
         self.assertDictEqual(json.loads(response.content), tag_dict)
+
+    def test_detail_non_exists_status_code(self):
+        tag_id = self.TAGS_QUANTITY + 1
+        response = self.client.get(f'{self.URL}{tag_id}/')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
+from recipes.models import Tag
 from users.models import User
 
 
@@ -45,3 +46,10 @@ class UserSetPasswordSerializer(serializers.Serializer):
         if not current_user.check_password(current_password):
             raise ValidationError('Неверный пароль!')
         return current_password
+
+
+class TagSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ['id', 'name', 'slug', 'color']
+        read_only_fields = fields
+        model = Tag

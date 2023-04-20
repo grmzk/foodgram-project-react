@@ -1,18 +1,21 @@
 from djoser import utils as djoser_utils
 from djoser.conf import settings as djoser_settings
 from djoser.views import TokenCreateView
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from recipes.models import Tag
 from users.models import User
 
 from .paginations import PageNumberLimitPagination
 from .permissions import IsAuthOrListOnlyPermission
-from .serializers import UserSerializer, UserSetPasswordSerializer
+from .serializers import (TagSerializer, UserSerializer,
+                          UserSetPasswordSerializer)
+from .viewsets import ListRetrieveCreateModelViewSet, ListRetrieveModelViewSet
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(ListRetrieveCreateModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     http_method_names = ['get', 'post']
@@ -45,3 +48,10 @@ class TokenCreateResponse201View(TokenCreateView):
             data=token_serializer_class(token).data,
             status=status.HTTP_201_CREATED
         )
+
+
+class TagViewSet(ListRetrieveModelViewSet):
+    queryset = Tag.objects.all()
+    serializer_class = TagSerializer
+    http_method_names = ['get']
+    permission_classes = [permissions.AllowAny]
