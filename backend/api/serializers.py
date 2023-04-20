@@ -6,7 +6,7 @@ from users.models import User
 
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField(read_only=True)
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(max_length=150, write_only=True)
 
     class Meta:
         fields = ['id', 'username', 'email', 'first_name', 'last_name',
@@ -43,5 +43,5 @@ class UserSetPasswordSerializer(serializers.Serializer):
     def validate_current_password(self, current_password):
         current_user = self.context['request'].user
         if not current_user.check_password(current_password):
-            ValidationError('Неверный пароль!')
+            raise ValidationError('Неверный пароль!')
         return current_password

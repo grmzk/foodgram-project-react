@@ -8,6 +8,7 @@ from rest_framework.response import Response
 from users.models import User
 
 from .paginations import PageNumberLimitPagination
+from .permissions import IsAuthOrListOnlyPermission
 from .serializers import UserSerializer, UserSetPasswordSerializer
 
 
@@ -16,6 +17,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     http_method_names = ['get', 'post']
     pagination_class = PageNumberLimitPagination
+    permission_classes = [IsAuthOrListOnlyPermission]
 
     @action(detail=False, methods=['GET'], url_path='me',
             permission_classes=[permissions.IsAuthenticated])
