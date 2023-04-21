@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from recipes.models import Tag
+from recipes.models import Ingredient, Tag
 from users.models import User
 
 
@@ -53,3 +53,12 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'color']
         read_only_fields = fields
         model = Tag
+
+
+class IngredientSerializer(serializers.ModelSerializer):
+    measurement_unit = serializers.StringRelatedField()
+
+    class Meta:
+        fields = ['id', 'name', 'measurement_unit']
+        read_only_fields = fields
+        model = Ingredient

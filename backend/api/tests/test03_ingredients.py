@@ -12,14 +12,12 @@ class IngredientsTests(APITestCase):
 
     @classmethod
     def setUpTestData(cls):
+        cls.unit = MeasurementUnit.objects.create(name='kn')
         cls.ingreds = list()
         for n in range(0, cls.INGREDS_QUANTITY):
-            unit = MeasurementUnit.objects.create(
-                name='kn'
-            )
             ingred = Ingredient.objects.create(
                 name=f'ingred{n}',
-                measurement_unit=unit,
+                measurement_unit=cls.unit,
             )
             cls.ingreds.append(ingred)
 
@@ -55,23 +53,33 @@ class IngredientsTests(APITestCase):
                     self.fail(f'Item <{finding_ingred}> '
                               'not found in response\'s results!')
 
-    def test_detail_result_keys(self):
+    def test_list_query_param(self):
+        ingred = Ingredient.objects.create(name='Bacon',
+                                           measurement_unit=self.unit)
+        key = 'bac'
+        response = self.client.get(f'{self.URL}?name={key}')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data[0]['name'], ingred.name)
+        ingred.delete()
+
+    def test_retrieve_result_keys(self):
         ingred_id = self.ingreds[0].id
         response = self.client.get(f'{self.URL}{ingred_id}/')
         keys = ['id', 'name', 'measurement_unit']
         self.assertCountEqual(response.data.keys(), keys)
 
-    def test_detail_result_values(self):
+    def test_retrieve_result_values(self):
         ingred_id = self.ingreds[0].id
         response = self.client.get(f'{self.URL}{ingred_id}/')
         ingred = Ingredient.objects.get(id=ingred_id)
-        keys = ['id', 'name', 'slug', 'color']
+        keys = ['id', 'name']
         ingred_dict = dict()
         for key in keys:
             ingred_dict[key] = getattr(ingred, key)
+        ingred_dict['measurement_unit'] = ingred.measurement_unit.name
         self.assertDictEqual(json.loads(response.content), ingred_dict)
 
-    def test_detail_non_exists_status_code(self):
+    def test_retrieve_non_exists_status_code(self):
         ingred_id = self.INGREDS_QUANTITY + 1
         response = self.client.get(f'{self.URL}{ingred_id}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

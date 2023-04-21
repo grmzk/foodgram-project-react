@@ -78,17 +78,17 @@ class UsersGETTests(APITestCase):
         self.assertEqual(username1, username2, 'Query params <page> and '
                                                '<limit> works incorrectly!')
 
-    def test_detail_non_auth_status_code(self):
+    def test_retrieve_non_auth_status_code(self):
         user_id = self.USERS_QUANTITY // 2 + 1
         response = self.client.get(f'{self.URL}{user_id}/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_detail_non_exists_status_code(self):
+    def test_retrieve_non_exists_status_code(self):
         user_id = self.USERS_QUANTITY + 1
         response = self.client.get(f'{self.URL}{user_id}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_detail_result_keys(self):
+    def test_retrieve_result_keys(self):
         user = self.users[0]
         self.client.force_authenticate(user)
         user_id = self.USERS_QUANTITY // 2 + 1
@@ -98,7 +98,7 @@ class UsersGETTests(APITestCase):
         self.assertCountEqual(response.data.keys(), keys)
         self.client.logout()
 
-    def test_detail_result_values(self):
+    def test_retrieve_result_values(self):
         user = self.users[0]
         self.client.force_authenticate(user)
         user_id = self.USERS_QUANTITY // 2 + 1

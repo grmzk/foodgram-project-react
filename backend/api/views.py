@@ -5,12 +5,12 @@ from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import Tag
+from recipes.models import Ingredient, Tag
 from users.models import User
 
 from .paginations import PageNumberLimitPagination
 from .permissions import IsAuthOrListOnlyPermission
-from .serializers import (TagSerializer, UserSerializer,
+from .serializers import (IngredientSerializer, TagSerializer, UserSerializer,
                           UserSetPasswordSerializer)
 from .viewsets import ListRetrieveCreateModelViewSet, ListRetrieveModelViewSet
 
@@ -55,3 +55,16 @@ class TagViewSet(ListRetrieveModelViewSet):
     serializer_class = TagSerializer
     http_method_names = ['get']
     permission_classes = [permissions.AllowAny]
+
+
+class IngredientViewSet(ListRetrieveModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientSerializer
+    http_method_names = ['get']
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        name = self.request.query_params.get('name')
+        if name:
+            return Ingredient.objects.filter(name__istartswith=name)
+        return self.queryset
