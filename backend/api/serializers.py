@@ -1,12 +1,12 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from recipes.models import Ingredient, Tag
+from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
 from users.models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
+    is_subscribed = serializers.BooleanField(read_only=True)
     password = serializers.CharField(max_length=150, write_only=True)
 
     class Meta:
@@ -26,10 +26,6 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
-
-    def get_is_subscribed(self, user):
-        current_user = self.context['request'].user
-        return user.following.all().filter(user=current_user.id).exists()
 
 
 class UserSetPasswordSerializer(serializers.Serializer):
@@ -56,9 +52,63 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientSerializer(serializers.ModelSerializer):
-    measurement_unit = serializers.StringRelatedField()
+    measurement_unit = serializers.StringRelatedField(
+        source='measurement_unit.name'
+    )
 
     class Meta:
         fields = ['id', 'name', 'measurement_unit']
         read_only_fields = fields
         model = Ingredient
+
+
+class SerializerRepresentRelatedField(serializers.RelatedField):
+    def __init__(self, **kwargs):
+        self.serializer = kwargs.pop('serializer', None)
+        assert self.serializer, 'Argument <serializer> must be specified!'
+        super().__init__(**kwargs)
+
+    def to_representation(self, value):
+        return self.serializer(context=self.context, instance=value).data
+
+
+class IngredientAmountSerializer(serializers.ModelSerializer):
+    name = serializers.StringRelatedField(
+        source='ingredient.name',
+        read_only=True
+    )
+    measurement_unit = serializers.StringRelatedField(
+        source='ingredient.measurement_unit.name',
+        read_only=True
+    )
+
+    class Meta:
+        fields = ['id', 'name', 'measurement_unit', 'amount']
+        read_only_fields = fields
+        model = IngredientAmount
+
+
+class RecipeSerializer(serializers.ModelSerializer):
+    author = SerializerRepresentRelatedField(
+        serializer=UserSerializer,
+        read_only=True,
+    )
+    tags = SerializerRepresentRelatedField(
+        serializer=TagSerializer,
+        read_only=True,
+        many=True,
+    )
+    image = serializers.ImageField()
+    ingredients = SerializerRepresentRelatedField(
+        serializer=IngredientAmountSerializer,
+        read_only=True,
+        many=True,
+    )
+    is_favorited = serializers.BooleanField(read_only=True)
+    is_in_shopping_cart = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        fields = ['id', 'author', 'tags', 'name', 'text',
+                  'image', 'ingredients', 'cooking_time',
+                  'is_favorited', 'is_in_shopping_cart']
+        model = Recipe
