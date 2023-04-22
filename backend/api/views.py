@@ -37,7 +37,7 @@ class UserViewSet(ListRetrieveCreateModelViewSet):
     @action(detail=False, methods=['GET'], url_path='me',
             permission_classes=[permissions.IsAuthenticated])
     def me_action(self, request):
-        instance = self.request.user
+        instance = self.get_queryset().get(id=self.request.user.id)
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
