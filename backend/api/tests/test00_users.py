@@ -168,11 +168,17 @@ class UsersPOSTTests(APITestCase):
     }
     REG_REQUIRED_FIELDS = REG_FIELDS_MAX_LENGTH.keys()
 
-    def test_registration_status_code(self):
+    def test_registration(self):
         response = self.client.post(self.URL, data=self.USER_DATA)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        user = User.objects.get(username=self.USER_DATA['username'])
-        user.delete()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED,
+                         msg=response.data)
+        try:
+            user = User.objects.get(username=self.USER_DATA['username'])
+            user.delete()
+        except Exception as error:
+            self.fail('Registration is not working properly!\n'
+                      'Error when getting a new user from the database: '
+                      f'{error}')
 
     def test_registration_missing_required_field(self):
         for field in self.REG_REQUIRED_FIELDS:

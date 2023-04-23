@@ -1,21 +1,27 @@
-from rest_framework import status
-from rest_framework.test import APITestCase
+import shutil
+import tempfile
 
-from recipes.models import Recipe, Tag
+from rest_framework import status
+from rest_framework.test import APITestCase, override_settings
+
+from recipes.models import Ingredient, Recipe, Tag
 from users.models import User
+
+TEST_FIXTURES_DIR = 'api/tests/fixtures'
+FIXTURES = [
+    f'{TEST_FIXTURES_DIR}/test_user.json',
+    f'{TEST_FIXTURES_DIR}/test_subscription.json',
+    f'{TEST_FIXTURES_DIR}/test_measurement_unit.json',
+    f'{TEST_FIXTURES_DIR}/test_ingredient.json',
+    f'{TEST_FIXTURES_DIR}/test_ingredient_amount.json',
+    f'{TEST_FIXTURES_DIR}/test_tag.json',
+    f'{TEST_FIXTURES_DIR}/test_recipe.json',
+]
+MEDIA_ROOT = tempfile.mkdtemp()
 
 
 class RecipesGETTests(APITestCase):
-    TEST_FIXTURES_DIR = 'api/tests/fixtures'
-    fixtures = [
-        f'{TEST_FIXTURES_DIR}/test_user.json',
-        f'{TEST_FIXTURES_DIR}/test_subscription.json',
-        f'{TEST_FIXTURES_DIR}/test_measurement_unit.json',
-        f'{TEST_FIXTURES_DIR}/test_ingredient.json',
-        f'{TEST_FIXTURES_DIR}/test_ingredient_amount.json',
-        f'{TEST_FIXTURES_DIR}/test_tag.json',
-        f'{TEST_FIXTURES_DIR}/test_recipe.json',
-    ]
+    fixtures = FIXTURES
 
     URL = '/api/recipes/'
 
@@ -158,3 +164,96 @@ class RecipesGETTests(APITestCase):
                 'text', 'image', 'ingredients',
                 'cooking_time', 'is_favorited', 'is_in_shopping_cart']
         self.assertCountEqual(response.data.keys(), keys)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class RecipesPOSTTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/recipes/'
+    RECIPE_DATA = {
+        'name': 'recipe1',
+        'text': 'some text',
+        'tags': [1, 3],
+        'image': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAgMAAA'
+                 'BieywaAAAACVBMVEUAAAD///9fX1/S0ecCAAAACXBIWXMAAA7EAAAOxAGVKw'
+                 '4bAAAACklEQVQImWNoAAAAggCByxOyYQAAAABJRU5ErkJggg==',
+        'ingredients': [
+            {
+                'id': 1,
+                'amount': 5,
+            },
+            {
+                'id': 8,
+                'amount': 7,
+            },
+        ],
+        'cooking_time': 5,
+    }
+    RECIPES_FIELDS_MAX_LENGTH = {
+        'name': 200,
+    }
+    RECIPES_REQUIRED_FIELDS = RECIPE_DATA.keys()
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def test_adding_recipe(self):
+        user = User.objects.get(id=3)
+        self.client.force_authenticate(user)
+        response = self.client.post(self.URL, data=self.RECIPE_DATA)
+        self.client.logout()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED,
+                         msg=response.data)
+        try:
+            recipe = Recipe.objects.get(name=self.RECIPE_DATA['name'])
+            recipe.delete()
+        except Exception as error:
+            self.fail('Adding recipe is not working properly!\n'
+                      'Error when getting a new recipe from the database: '
+                      f'{error}')
+
+    def test_registration_missing_required_field(self):
+        for field in self.RECIPES_REQUIRED_FIELDS:
+            with self.subTest(field=field):
+                data = self.RECIPE_DATA.copy()
+                del_field = field
+                del data[del_field]
+                response = self.client.post(self.URL, data=data)
+                self.assertEqual(response.status_code,
+                                 status.HTTP_400_BAD_REQUEST)
+                self.assertCountEqual(response.data.keys(), [del_field])
+
+    def test_non_exists_tag_status_code(self):
+        user = User.objects.get(id=3)
+        self.client.force_authenticate(user)
+        true_id = self.RECIPE_DATA['tags'][0]
+        self.RECIPE_DATA['tags'][0] = Tag.objects.latest('id').id + 1
+        response = self.client.post(self.URL, data=self.RECIPE_DATA)
+        self.RECIPE_DATA['tags'][0] = true_id
+        self.client.logout()
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_non_exists_ingredient_status_code(self):
+        user = User.objects.get(id=3)
+        self.client.force_authenticate(user)
+        true_id = self.RECIPE_DATA['ingredients'][0]['id']
+        self.RECIPE_DATA['ingredients'][0]['id'] = (
+            Ingredient.objects.latest('id').id + 1
+        )
+        response = self.client.post(self.URL, data=self.RECIPE_DATA)
+        self.RECIPE_DATA['ingredients'][0]['id'] = true_id
+        self.client.logout()
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_registration_fields_length_error(self):
+        for field, max_length in self.RECIPES_FIELDS_MAX_LENGTH.items():
+            with self.subTest(field=field):
+                data = self.RECIPE_DATA.copy()
+                data[field] = 'a' * (max_length + 1)
+                response = self.client.post(self.URL, data=data)
+                self.assertEqual(response.status_code,
+                                 status.HTTP_400_BAD_REQUEST)
+                self.assertCountEqual(response.data.keys(), [field])

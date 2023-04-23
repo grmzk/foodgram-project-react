@@ -1,4 +1,5 @@
-dumpdata.sh
+backend/media/
+backend/dumpdata.sh
 
 
 # Byte-compiled / optimized / DLL files

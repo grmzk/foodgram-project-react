@@ -4,6 +4,9 @@ from rest_framework.exceptions import ValidationError
 from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
 from users.models import User
 
+from .serializer_fields import (Base64ImageField, IngredientsRelatedField,
+                                TagsPrimaryKeyRelatedField)
+
 
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.BooleanField(read_only=True)
@@ -62,16 +65,6 @@ class IngredientSerializer(serializers.ModelSerializer):
         model = Ingredient
 
 
-class SerializerRepresentRelatedField(serializers.RelatedField):
-    def __init__(self, **kwargs):
-        self.serializer = kwargs.pop('serializer', None)
-        assert self.serializer, 'Argument <serializer> must be specified!'
-        super().__init__(**kwargs)
-
-    def to_representation(self, value):
-        return self.serializer(context=self.context, instance=value).data
-
-
 class IngredientAmountSerializer(serializers.ModelSerializer):
     name = serializers.StringRelatedField(
         source='ingredient.name',
@@ -89,19 +82,11 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
 
 
 class RecipeSerializer(serializers.ModelSerializer):
-    author = SerializerRepresentRelatedField(
-        serializer=UserSerializer,
-        read_only=True,
-    )
-    tags = SerializerRepresentRelatedField(
-        serializer=TagSerializer,
-        read_only=True,
-        many=True,
-    )
-    image = serializers.ImageField()
-    ingredients = SerializerRepresentRelatedField(
-        serializer=IngredientAmountSerializer,
-        read_only=True,
+    author = UserSerializer(read_only=True)
+    tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    image = Base64ImageField()
+    ingredients = IngredientsRelatedField(
+        queryset=IngredientAmount.objects.all(),
         many=True,
     )
     is_favorited = serializers.BooleanField(read_only=True)

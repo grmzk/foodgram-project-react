@@ -111,3 +111,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 .all()
                 .annotate(is_favorited=is_favorited)
                 .annotate(is_in_shopping_cart=is_in_shopping_cart))
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
