@@ -6,6 +6,7 @@ from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 
 from recipes.models import Ingredient
+from recipes.validators import min_amount_validator
 
 
 class IngredientsRelatedField(serializers.RelatedField):
@@ -15,9 +16,13 @@ class IngredientsRelatedField(serializers.RelatedField):
                                           instance=value).data
 
     def to_internal_value(self, data):
+        min_amount_validator(data['amount'])
         ingredient = get_object_or_404(Ingredient, id=data['id'])
-        return self.queryset.create(ingredient=ingredient,
-                                    amount=data['amount'])
+        ingredient_amount, _ = self.queryset.get_or_create(
+            ingredient=ingredient,
+            amount=data['amount']
+        )
+        return ingredient_amount
 
 
 class TagsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):

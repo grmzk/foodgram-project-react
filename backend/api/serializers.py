@@ -2,13 +2,17 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from recipes.models import Ingredient, IngredientAmount, Recipe, Tag
+from recipes.validators import min_cooking_time_validator
 from users.models import User
+from users.validators import username_regex_validator
 
 from .serializer_fields import (Base64ImageField, IngredientsRelatedField,
                                 TagsPrimaryKeyRelatedField)
 
 
 class UserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(max_length=150,
+                                     validators=[username_regex_validator])
     is_subscribed = serializers.BooleanField(read_only=True)
     password = serializers.CharField(max_length=150, write_only=True)
 
@@ -88,6 +92,9 @@ class RecipeSerializer(serializers.ModelSerializer):
     ingredients = IngredientsRelatedField(
         queryset=IngredientAmount.objects.all(),
         many=True,
+    )
+    cooking_time = serializers.IntegerField(
+        validators=[min_cooking_time_validator]
     )
     is_favorited = serializers.BooleanField(read_only=True)
     is_in_shopping_cart = serializers.BooleanField(read_only=True)

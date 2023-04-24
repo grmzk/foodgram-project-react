@@ -13,7 +13,7 @@ from users.models import Subscription, User
 
 from .filters import RecipeFilter
 from .paginations import PageNumberLimitPagination
-from .permissions import IsAuthOrListOnlyPermission
+from .permissions import IsAuthOrListOnlyPermission, IsAuthorOrGetOrPost
 from .serializers import (IngredientSerializer, RecipeSerializer,
                           TagSerializer, UserSerializer,
                           UserSetPasswordSerializer)
@@ -84,11 +84,12 @@ class IngredientViewSet(ListRetrieveModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
-    http_method_names = ['get', 'post', 'patch', 'del']
+    http_method_names = ['get', 'post', 'patch', 'delete']
     pagination_class = PageNumberLimitPagination
     filter_backends = [rest_framework.DjangoFilterBackend]
     filterset_class = RecipeFilter
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly,
+                          IsAuthorOrGetOrPost]
 
     def get_queryset(self):
         current_user = self.request.user
