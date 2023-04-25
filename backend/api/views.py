@@ -36,14 +36,14 @@ class UserViewSet(ListRetrieveCreateModelViewSet):
         )
         return User.objects.all().annotate(is_subscribed=is_subscribed)
 
-    @action(detail=False, methods=['GET'], url_path='me',
+    @action(detail=False, methods=['get'], url_path='me',
             permission_classes=[permissions.IsAuthenticated])
     def me_action(self, request):
         instance = self.get_queryset().get(id=self.request.user.id)
         serializer = self.get_serializer(instance)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=False, methods=['POST'], url_path='set_password',
+    @action(detail=False, methods=['post'], url_path='set_password',
             permission_classes=[permissions.IsAuthenticated],
             serializer_class=UserSetPasswordSerializer)
     def set_password_action(self, request):
@@ -149,6 +149,29 @@ class RecipeViewSet(viewsets.ModelViewSet):
             data = {'errors': 'Recipe is not in the shopping cart!'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         request.user.shopping_cart.remove(recipe)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=['post'],
+            url_path='favorite',
+            permission_classes=[permissions.IsAuthenticated])
+    def favorite_action(self, request, pk):
+        recipe = get_object_or_404(self.get_queryset(), id=pk)
+        if recipe in request.user.favorite.all():
+            data = {'errors': 'Recipe is already in the favorite!'}
+            return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+        request.user.favorite.add(recipe)
+        serializer = self.get_serializer(recipe)
+        keys = ['id', 'name', 'image', 'cooking_time']
+        data = {key: serializer.data[key] for key in keys}
+        return Response(data=data, status=status.HTTP_201_CREATED)
+
+    @favorite_action.mapping.delete
+    def favorite_delete_action(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
+        if recipe not in request.user.favorite.all():
+            data = {'errors': 'Recipe is not in favorite!'}
+            return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+        request.user.favorite.remove(recipe)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_queryset(self):

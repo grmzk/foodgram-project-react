@@ -449,7 +449,7 @@ class RecipesPOSTShoppingCartTests(APITestCase):
     def setUp(self) -> None:
         self.client.force_authenticate(self.user)
 
-    def test_add_to_shopping_cart(self):
+    def test_add_recipe_to_shopping_cart(self):
         response = self.client.post(self.non_sc_url)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(
@@ -494,7 +494,7 @@ class RecipesDELETEShoppingCartTests(APITestCase):
     def setUp(self) -> None:
         self.client.force_authenticate(self.user)
 
-    def test_delete_from_shopping_cart(self):
+    def test_delete_recipe_from_shopping_cart(self):
         response = self.client.delete(self.sc_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(
@@ -538,4 +538,94 @@ class RecipesGETShoppingCartTests(APITestCase):
     def test_get_shopping_cart_non_auth(self):
         self.client.logout()
         response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class RecipesPOSTFavoriteTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/recipes/'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.get(id=2)
+        cls.favorite_recipe = cls.user.favorite.all()[0]
+        cls.non_favorite_recipe = None
+        for recipe in Recipe.objects.all():
+            if recipe not in cls.user.favorite.all():
+                cls.non_favorite_recipe = recipe
+                break
+        cls.non_favorite_url = (f'{cls.URL}{cls.non_favorite_recipe.id}'
+                                '/favorite/')
+        cls.favorite_url = f'{cls.URL}{cls.favorite_recipe.id}/favorite/'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(self.user)
+
+    def test_add_recipe_to_favorite(self):
+        response = self.client.post(self.non_favorite_url)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            self.user.favorite.filter(id=self.non_favorite_recipe.id).exists()
+        )
+        keys = ['id', 'name', 'image', 'cooking_time']
+        self.assertCountEqual(response.data.keys(), keys)
+
+    def test_add_exists_recipe_to_favorite(self):
+        response = self.client.post(self.favorite_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_add_recipe_to_favorite_non_auth(self):
+        self.client.logout()
+        response = self.client.post(self.non_favorite_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class RecipesDELETEFavoriteTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/recipes/'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.get(id=2)
+        cls.favorite_recipe = cls.user.favorite.all()[0]
+        cls.non_favorite_recipe = None
+        for recipe in Recipe.objects.all():
+            if recipe not in cls.user.favorite.all():
+                cls.non_favorite_recipe = recipe
+                break
+        cls.non_favorite_url = (f'{cls.URL}{cls.non_favorite_recipe.id}'
+                                '/favorite/')
+        cls.favorite_url = f'{cls.URL}{cls.favorite_recipe.id}/favorite/'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(self.user)
+
+    def test_delete_recipe_from_favorite(self):
+        response = self.client.delete(self.favorite_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            self.user.favorite.filter(id=self.favorite_recipe.id).exists()
+        )
+
+    def test_delete_non_exists_recipe_from_favorite(self):
+        response = self.client.delete(self.non_favorite_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_recipe_from_favorite_non_auth(self):
+        self.client.logout()
+        response = self.client.delete(self.favorite_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
