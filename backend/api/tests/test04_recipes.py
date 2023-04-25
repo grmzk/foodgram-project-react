@@ -421,3 +421,121 @@ class RecipesDELETETests(APITestCase):
         invalid_recipe_id = Recipe.objects.latest('id').id + 1
         response = self.client.delete(f'{self.URL}{invalid_recipe_id}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class RecipesPOSTShoppingCartTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/recipes/'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.get(id=2)
+        cls.sc_recipe = cls.user.shopping_cart.all()[0]
+        cls.non_sc_recipe = None
+        for recipe in Recipe.objects.all():
+            if recipe not in cls.user.shopping_cart.all():
+                cls.non_sc_recipe = recipe
+                break
+        cls.non_sc_url = f'{cls.URL}{cls.non_sc_recipe.id}/shopping_cart/'
+        cls.sc_url = f'{cls.URL}{cls.sc_recipe.id}/shopping_cart/'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(self.user)
+
+    def test_add_to_shopping_cart(self):
+        response = self.client.post(self.non_sc_url)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            self.user.shopping_cart.filter(id=self.non_sc_recipe.id).exists()
+        )
+        keys = ['id', 'name', 'image', 'cooking_time']
+        self.assertCountEqual(response.data.keys(), keys)
+
+    def test_add_exists_recipe_to_shopping_cart(self):
+        response = self.client.post(self.sc_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_add_recipe_to_shopping_cart_non_auth(self):
+        self.client.logout()
+        response = self.client.post(self.non_sc_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class RecipesDELETEShoppingCartTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/recipes/'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.get(id=2)
+        cls.sc_recipe = cls.user.shopping_cart.all()[0]
+        cls.non_sc_recipe = None
+        for recipe in Recipe.objects.all():
+            if recipe not in cls.user.shopping_cart.all():
+                cls.non_sc_recipe = recipe
+                break
+        cls.non_sc_url = f'{cls.URL}{cls.non_sc_recipe.id}/shopping_cart/'
+        cls.sc_url = f'{cls.URL}{cls.sc_recipe.id}/shopping_cart/'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(self.user)
+
+    def test_delete_from_shopping_cart(self):
+        response = self.client.delete(self.sc_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            self.user.shopping_cart.filter(id=self.sc_recipe.id).exists()
+        )
+
+    def test_delete_non_exists_recipe_from_shopping_cart(self):
+        response = self.client.delete(self.non_sc_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_recipe_from_shopping_cart_non_auth(self):
+        self.client.logout()
+        response = self.client.delete(self.sc_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class RecipesGETShoppingCartTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/recipes/'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.get(id=2)
+        cls.url = f'{cls.URL}download_shopping_cart/'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(self.user)
+
+    def test_get_shopping_cart(self):
+        self.user.shopping_cart.add(3)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_shopping_cart_non_auth(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

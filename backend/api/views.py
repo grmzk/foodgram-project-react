@@ -1,5 +1,7 @@
 from django.db.models import Exists, OuterRef, Prefetch
 from django.db.models.expressions import Value
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from django_filters import rest_framework
 from djoser import utils as djoser_utils
 from djoser.conf import settings as djoser_settings
@@ -90,6 +92,64 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
                           IsAuthorOrGetOrPost]
+
+    @staticmethod
+    def gen_shopping_cart_content(recipes):
+        header = ('---------СПИСОК ПОКУПОК---------\n'
+                  '================================\n')
+        footer = ('================================\n'
+                  '----------FOODGRAM (\u2184)----------')
+        data = dict()
+        for recipe in recipes:
+            for ingredient_amount in recipe.ingredients.all():
+                ingredient = ingredient_amount.ingredient
+                data[ingredient] = (
+                    data.get(ingredient, 0) + ingredient_amount.amount
+                )
+        body = str()
+        for ingredient, amount in data.items():
+            body += (f'{ingredient.name} - {amount} '
+                     f'{ingredient.measurement_unit.name}\n')
+        return header + body + footer
+
+    @action(detail=False, methods=['get'],
+            url_path='download_shopping_cart',
+            permission_classes=[permissions.IsAuthenticated])
+    def download_shopping_cart_action(self, request):
+        recipes = (request.user.shopping_cart
+                   .prefetch_related('ingredients__ingredient'
+                                     '__measurement_unit').all())
+        content = self.gen_shopping_cart_content(recipes)
+        filename = f'{request.user.username}_shopping_cart.txt'
+        headers = {
+            'Content-Type': 'text/plain',
+            'Content-Disposition': f'attachment; filename="{filename}"',
+        }
+        return HttpResponse(content, headers=headers,
+                            status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'],
+            url_path='shopping_cart',
+            permission_classes=[permissions.IsAuthenticated])
+    def shopping_cart_action(self, request, pk):
+        recipe = get_object_or_404(self.get_queryset(), id=pk)
+        if recipe in request.user.shopping_cart.all():
+            data = {'errors': 'Recipe is already in the shopping cart!'}
+            return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+        request.user.shopping_cart.add(recipe)
+        serializer = self.get_serializer(recipe)
+        keys = ['id', 'name', 'image', 'cooking_time']
+        data = {key: serializer.data[key] for key in keys}
+        return Response(data=data, status=status.HTTP_201_CREATED)
+
+    @shopping_cart_action.mapping.delete
+    def shopping_cart_delete_action(self, request, pk):
+        recipe = get_object_or_404(Recipe, id=pk)
+        if recipe not in request.user.shopping_cart.all():
+            data = {'errors': 'Recipe is not in the shopping cart!'}
+            return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+        request.user.shopping_cart.remove(recipe)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     def get_queryset(self):
         current_user = self.request.user
