@@ -531,7 +531,6 @@ class RecipesGETShoppingCartTests(APITestCase):
         self.client.force_authenticate(self.user)
 
     def test_get_shopping_cart(self):
-        self.user.shopping_cart.add(3)
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

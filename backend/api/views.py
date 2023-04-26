@@ -53,6 +53,40 @@ class UserViewSet(ListRetrieveCreateModelViewSet):
         current_user.set_password(serializer.validated_data['new_password'])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    # @action(detail=False, methods=['get'],
+    #         url_path='subscriptions',
+    #         permission_classes=[permissions.IsAuthenticated])
+    # def subscriptions_action(self, request):
+    #     subscriptions = request.user.follower.all().annotate(test=Value(True))
+    #     authors = [item.author for item in subscriptions]
+    #     paginated = self.paginate_queryset(authors)
+    #     serializer = self.get_serializer(paginated, many=True)
+    #     print(type(serializer.data))
+    #     return self.get_paginated_response(serializer.data)
+
+    # @action(detail=True, methods=['post'],
+    #         url_path='shopping_cart',
+    #         permission_classes=[permissions.IsAuthenticated])
+    # def shopping_cart_action(self, request, pk):
+    #     recipe = get_object_or_404(self.get_queryset(), id=pk)
+    #     if recipe in request.user.shopping_cart.all():
+    #         data = {'errors': 'Recipe is already in the shopping cart!'}
+    #         return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+    #     request.user.shopping_cart.add(recipe)
+    #     serializer = self.get_serializer(recipe)
+    #     keys = ['id', 'name', 'image', 'cooking_time']
+    #     data = {key: serializer.data[key] for key in keys}
+    #     return Response(data=data, status=status.HTTP_201_CREATED)
+    #
+    # @shopping_cart_action.mapping.delete
+    # def shopping_cart_delete_action(self, request, pk):
+    #     recipe = get_object_or_404(Recipe, id=pk)
+    #     if recipe not in request.user.shopping_cart.all():
+    #         data = {'errors': 'Recipe is not in the shopping cart!'}
+    #         return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
+    #     request.user.shopping_cart.remove(recipe)
+    #     return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class TokenCreateResponse201View(TokenCreateView):
     def _action(self, serializer):
