@@ -5,7 +5,7 @@ from recipes.validators import min_cooking_time_validator
 
 from ..serializer_fields import (Base64ImageField, IngredientsRelatedField,
                                  TagsPrimaryKeyRelatedField)
-from ..serializers import UserSerializer
+from ..serializers.user import UserSerializer
 
 
 class RecipeSerializer(serializers.ModelSerializer):

@@ -8,7 +8,8 @@ from rest_framework.serializers import ValidationError
 from recipes.models import Ingredient
 from recipes.validators import min_amount_validator
 
-from .serializers import IngredientAmountSerializer, TagSerializer
+from .serializers import IngredientAmountSerializer
+from .serializers.tag import TagSerializer
 
 
 class IngredientsRelatedField(serializers.RelatedField):
