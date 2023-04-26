@@ -8,10 +8,11 @@ from rest_framework.serializers import ValidationError
 from recipes.models import Ingredient
 from recipes.validators import min_amount_validator
 
+from .serializers import IngredientAmountSerializer, TagSerializer
+
 
 class IngredientsRelatedField(serializers.RelatedField):
     def to_representation(self, value):
-        from api.serializers import IngredientAmountSerializer
         return IngredientAmountSerializer(context=self.context,
                                           instance=value).data
 
@@ -27,7 +28,6 @@ class IngredientsRelatedField(serializers.RelatedField):
 
 class TagsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     def to_representation(self, value):
-        from api.serializers import TagSerializer
         return TagSerializer(context=self.context, instance=value).data
 
     def to_internal_value(self, data):

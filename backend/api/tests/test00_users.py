@@ -1,7 +1,7 @@
 import json
-import unittest
 import shutil
 import tempfile
+import unittest
 
 from rest_framework import status
 from rest_framework.test import APITestCase, override_settings
