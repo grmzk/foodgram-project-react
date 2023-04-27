@@ -5,10 +5,11 @@ from recipes.validators import min_cooking_time_validator
 
 from ..serializer_fields import (Base64ImageField, IngredientsRelatedField,
                                  TagsPrimaryKeyRelatedField)
+from ..serializers import DynamicFieldsModelSerializer
 from ..serializers.user import UserSerializer
 
 
-class RecipeSerializer(serializers.ModelSerializer):
+class RecipeSerializer(DynamicFieldsModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     image = Base64ImageField()

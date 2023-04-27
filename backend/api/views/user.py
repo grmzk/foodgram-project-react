@@ -1,13 +1,15 @@
-from django.db.models import Exists, OuterRef
+from django.db.models import Count
 from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from users.models import Subscription, User
+from users.models import User
 
 from ..paginations import PageNumberLimitPagination
 from ..permissions import IsAuthOrListOnlyPermission
-from ..serializers import UserSerializer, UserSetPasswordSerializer
+from ..serializers import (UserSerializer, UserSetPasswordSerializer,
+                           UserSubscriptionsSerializer)
+from ..utils import is_subscribed
 from ..viewsets import ListRetrieveCreateModelViewSet
 
 
@@ -18,12 +20,9 @@ class UserViewSet(ListRetrieveCreateModelViewSet):
     permission_classes = [IsAuthOrListOnlyPermission]
 
     def get_queryset(self):
-        current_user = self.request.user
-        is_subscribed = (
-            Exists(Subscription.objects.filter(author_id=OuterRef('id'),
-                                               user_id=current_user.id))
+        return User.objects.all().annotate(
+            is_subscribed=is_subscribed(self.request.user.id)
         )
-        return User.objects.all().annotate(is_subscribed=is_subscribed)
 
     @action(detail=False, methods=['get'], url_path='me',
             permission_classes=[permissions.IsAuthenticated])
@@ -42,16 +41,23 @@ class UserViewSet(ListRetrieveCreateModelViewSet):
         current_user.set_password(serializer.validated_data['new_password'])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # @action(detail=False, methods=['get'],
-    #         url_path='subscriptions',
-    #         permission_classes=[permissions.IsAuthenticated])
-    # def subscriptions_action(self, request):
-    #     subscriptions = request.user.follower.all().annotate(test=Value(True))
-    #     authors = [item.author for item in subscriptions]
-    #     paginated = self.paginate_queryset(authors)
-    #     serializer = self.get_serializer(paginated, many=True)
-    #     print(type(serializer.data))
-    #     return self.get_paginated_response(serializer.data)
+    @action(detail=False, methods=['get'],
+            url_path='subscriptions',
+            serializer_class=UserSubscriptionsSerializer,
+            permission_classes=[permissions.IsAuthenticated])
+    def subscriptions_action(self, request):
+        authors = (User.objects.filter(following__user_id=request.user.id)
+                   .prefetch_related('recipes')
+                   .all()
+                   .annotate(is_subscribed=is_subscribed(request.user.id))
+                   .annotate(recipes_count=Count('recipes'))
+                   .order_by('username'))
+        paginated_authors = self.paginate_queryset(authors)
+        recipes_limit = request.query_params.get('recipes_limit', None)
+        serializer = self.get_serializer(paginated_authors,
+                                         recipes_limit=recipes_limit,
+                                         many=True)
+        return self.get_paginated_response(serializer.data)
 
     # @action(detail=True, methods=['post'],
     #         url_path='shopping_cart',

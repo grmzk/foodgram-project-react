@@ -8,12 +8,13 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from recipes.models import Recipe
+from users.models import User
 
 from ..filters import RecipeFilter
 from ..paginations import PageNumberLimitPagination
 from ..permissions import IsAuthorOrGetOrPost
 from ..serializers import RecipeSerializer
-from .user import UserViewSet
+from ..utils import is_subscribed
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -24,6 +25,35 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
                           IsAuthorOrGetOrPost]
+
+    def get_queryset(self):
+        current_user = self.request.user
+        author_prefetch = Prefetch(
+            'author',
+            queryset=User.objects.all().annotate(
+                is_subscribed=is_subscribed(current_user.id)
+            )
+        )
+        is_favorited = Value(False)
+        is_in_shopping_cart = Value(False)
+        if not current_user.is_anonymous:
+            is_favorited = (
+                Exists(current_user.favorite.filter(id=OuterRef('id')))
+            )
+            is_in_shopping_cart = (
+                Exists(current_user.shopping_cart.filter(id=OuterRef('id')))
+            )
+        return (Recipe.objects
+                .prefetch_related(author_prefetch)
+                .prefetch_related('tags')
+                .prefetch_related('ingredients__ingredient'
+                                  '__measurement_unit')
+                .all()
+                .annotate(is_favorited=is_favorited)
+                .annotate(is_in_shopping_cart=is_in_shopping_cart))
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
     @staticmethod
     def gen_shopping_cart_content(recipes):
@@ -69,10 +99,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             data = {'errors': 'Recipe is already in the shopping cart!'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         request.user.shopping_cart.add(recipe)
-        serializer = self.get_serializer(recipe)
-        keys = ['id', 'name', 'image', 'cooking_time']
-        data = {key: serializer.data[key] for key in keys}
-        return Response(data=data, status=status.HTTP_201_CREATED)
+        fields = ['id', 'name', 'image', 'cooking_time']
+        serializer = self.get_serializer(recipe, fields=fields)
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     @shopping_cart_action.mapping.delete
     def shopping_cart_delete_action(self, request, pk):
@@ -92,10 +121,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             data = {'errors': 'Recipe is already in the favorite!'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         request.user.favorite.add(recipe)
-        serializer = self.get_serializer(recipe)
-        keys = ['id', 'name', 'image', 'cooking_time']
-        data = {key: serializer.data[key] for key in keys}
-        return Response(data=data, status=status.HTTP_201_CREATED)
+        fields = ['id', 'name', 'image', 'cooking_time']
+        serializer = self.get_serializer(recipe, fields=fields)
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     @favorite_action.mapping.delete
     def favorite_delete_action(self, request, pk):
@@ -105,28 +133,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
         request.user.favorite.remove(recipe)
         return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def get_queryset(self):
-        current_user = self.request.user
-        author_prefetch = Prefetch('author',
-                                   queryset=UserViewSet.get_queryset(self))
-        is_favorited = Value(False)
-        is_in_shopping_cart = Value(False)
-        if not current_user.is_anonymous:
-            is_favorited = (
-                Exists(current_user.favorite.filter(id=OuterRef('id')))
-            )
-            is_in_shopping_cart = (
-                Exists(current_user.shopping_cart.filter(id=OuterRef('id')))
-            )
-        return (Recipe.objects
-                .prefetch_related(author_prefetch)
-                .prefetch_related('tags')
-                .prefetch_related('ingredients__ingredient'
-                                  '__measurement_unit')
-                .all()
-                .annotate(is_favorited=is_favorited)
-                .annotate(is_in_shopping_cart=is_in_shopping_cart))
-
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)

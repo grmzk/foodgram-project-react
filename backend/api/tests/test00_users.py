@@ -274,33 +274,89 @@ class UsersPOSTTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
-# @override_settings(MEDIA_ROOT=MEDIA_ROOT)
-# class UsersGETSubscriptionsTests(APITestCase):
-#     fixtures = FIXTURES
-#
-#     URL = '/api/users/'
-#
-#     @classmethod
-#     def setUpTestData(cls):
-#         cls.user = User.objects.get(id=2)
-#         cls.url = f'{cls.URL}subscriptions/'
-#
-#     @classmethod
-#     def tearDownClass(cls):
-#         shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
-#         super().tearDownClass()
-#
-#     def setUp(self) -> None:
-#         self.client.force_authenticate(self.user)
-#
-#     def test_get_shopping_cart(self):
-#         response = self.client.get(self.url)
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-#
-#     def test_get_shopping_cart_non_auth(self):
-#         self.client.logout()
-#         response = self.client.get(self.url)
-#         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class UsersGETSubscriptionsTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/users/'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.get(id=2)
+        cls.url = f'{cls.URL}subscriptions/'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(self.user)
+
+    def test_get_subscriptions(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_get_subscriptions_non_auth(self):
+        self.client.logout()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_subscriptions_pagination_exist(self):
+        response_list = self.client.get(self.url)
+        keys = ['count', 'next', 'previous', 'results']
+        self.assertCountEqual(response_list.data.keys(), keys)
+
+    def test_get_subscriptions_pagination_query_params(self):
+        authors_quantity = self.user.follower.all().count()
+        response1 = self.client.get(f'{self.url}?limit={authors_quantity}')
+        self.assertEqual(len(response1.data['results']), authors_quantity,
+                         'Query param <limit> works incorrectly!')
+        half_index = authors_quantity // 2
+        username1 = response1.data['results'][half_index]['username']
+        response2 = self.client.get(f'{self.url}?page=2&limit={half_index}')
+        username2 = response2.data['results'][0]['username']
+        self.assertEqual(username1, username2, 'Query params <page> and '
+                                               '<limit> works incorrectly!')
+
+    def test_get_subscriptions_result_keys(self):
+        response_list = self.client.get(self.url)
+        keys = ['id', 'username', 'email', 'first_name', 'last_name',
+                'is_subscribed', 'recipes', 'recipes_count']
+        self.assertCountEqual(response_list.data['results'][0].keys(),
+                              keys)
+
+    def test_get_subscriptions_recipes_limit_query_param(self):
+        recipes_limit = 1
+        response = self.client.get(
+            f'{self.url}?recipes_limit={recipes_limit}'
+        )
+        self.assertLessEqual(len(response.data['results'][0]['recipes']),
+                             recipes_limit)
+
+    def test_get_subscriptions_result_recipes_keys(self):
+        response_list = self.client.get(self.url)
+        keys = ['id', 'name', 'image', 'cooking_time']
+        self.assertCountEqual(
+            response_list.data['results'][0]['recipes'][0].keys(),
+            keys
+        )
+
+    def test_get_subscriptions_result_items(self):
+        response = self.client.get(self.url)
+        results = response.data['results']
+        response_authors = list()
+        while True:
+            for item in results:
+                response_authors.append(item['username'])
+            if response.data['next']:
+                response = self.client.get(response.data['next'])
+                results = response.data['results']
+                continue
+            break
+        authors = (User.objects.filter(following__user_id=self.user.id).all()
+                   .values_list('username', flat=True))
+        self.assertCountEqual(response_authors, authors)
 
 
 # @override_settings(MEDIA_ROOT=MEDIA_ROOT)
