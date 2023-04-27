@@ -48,7 +48,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 .prefetch_related('tags')
                 .prefetch_related('ingredients__ingredient'
                                   '__measurement_unit')
-                .all()
                 .annotate(is_favorited=is_favorited)
                 .annotate(is_in_shopping_cart=is_in_shopping_cart))
 

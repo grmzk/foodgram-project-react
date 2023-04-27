@@ -359,89 +359,88 @@ class UsersGETSubscriptionsTests(APITestCase):
         self.assertCountEqual(response_authors, authors)
 
 
-# @override_settings(MEDIA_ROOT=MEDIA_ROOT)
-# class RecipesPOSTShoppingCartTests(APITestCase):
-#     fixtures = FIXTURES
-#
-#     URL = '/api/recipes/'
-#
-#     @classmethod
-#     def setUpTestData(cls):
-#         cls.user = User.objects.get(id=2)
-#         cls.sc_recipe = cls.user.shopping_cart.all()[0]
-#         cls.non_sc_recipe = None
-#         for recipe in Recipe.objects.all():
-#             if recipe not in cls.user.shopping_cart.all():
-#                 cls.non_sc_recipe = recipe
-#                 break
-#         cls.non_sc_url = f'{cls.URL}{cls.non_sc_recipe.id}/shopping_cart/'
-#         cls.sc_url = f'{cls.URL}{cls.sc_recipe.id}/shopping_cart/'
-#
-#     @classmethod
-#     def tearDownClass(cls):
-#         shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
-#         super().tearDownClass()
-#
-#     def setUp(self) -> None:
-#         self.client.force_authenticate(self.user)
-#
-#     def test_add_recipe_to_shopping_cart(self):
-#         response = self.client.post(self.non_sc_url)
-#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-#         self.assertTrue(
-#             self.user.shopping_cart.filter(id=self.non_sc_recipe.id).exists()
-#         )
-#         keys = ['id', 'name', 'image', 'cooking_time']
-#         self.assertCountEqual(response.data.keys(), keys)
-#
-#     def test_add_exists_recipe_to_shopping_cart(self):
-#         response = self.client.post(self.sc_url)
-#         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-#
-#     def test_add_recipe_to_shopping_cart_non_auth(self):
-#         self.client.logout()
-#         response = self.client.post(self.non_sc_url)
-#         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-#
-#
-# @override_settings(MEDIA_ROOT=MEDIA_ROOT)
-# class RecipesDELETEShoppingCartTests(APITestCase):
-#     fixtures = FIXTURES
-#
-#     URL = '/api/recipes/'
-#
-#     @classmethod
-#     def setUpTestData(cls):
-#         cls.user = User.objects.get(id=2)
-#         cls.sc_recipe = cls.user.shopping_cart.all()[0]
-#         cls.non_sc_recipe = None
-#         for recipe in Recipe.objects.all():
-#             if recipe not in cls.user.shopping_cart.all():
-#                 cls.non_sc_recipe = recipe
-#                 break
-#         cls.non_sc_url = f'{cls.URL}{cls.non_sc_recipe.id}/shopping_cart/'
-#         cls.sc_url = f'{cls.URL}{cls.sc_recipe.id}/shopping_cart/'
-#
-#     @classmethod
-#     def tearDownClass(cls):
-#         shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
-#         super().tearDownClass()
-#
-#     def setUp(self) -> None:
-#         self.client.force_authenticate(self.user)
-#
-#     def test_delete_recipe_from_shopping_cart(self):
-#         response = self.client.delete(self.sc_url)
-#         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-#         self.assertFalse(
-#             self.user.shopping_cart.filter(id=self.sc_recipe.id).exists()
-#         )
-#
-#     def test_delete_non_exists_recipe_from_shopping_cart(self):
-#         response = self.client.delete(self.non_sc_url)
-#         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-#
-#     def test_delete_recipe_from_shopping_cart_non_auth(self):
-#         self.client.logout()
-#         response = self.client.delete(self.sc_url)
-#         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class UsersPOSTSubscriptionsTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/users/'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.get(id=2)
+        cls.author = (User.objects.filter(following__user_id=cls.user.id)
+                      .all()[0])
+        cls.non_author = (User.objects.exclude(following__user_id=cls.user.id)
+                          .all()[0])
+        cls.author_url = f'{cls.URL}{cls.author.id}/subscribe/'
+        cls.non_author_url = f'{cls.URL}{cls.non_author.id}/subscribe/'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(self.user)
+
+    def test_subscribe(self):
+        response = self.client.post(self.non_author_url)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(
+            self.user.follower.filter(author_id=self.non_author.id).exists(),
+            msg='New subscription not found!'
+        )
+        keys = ['id', 'username', 'email', 'first_name', 'last_name',
+                'is_subscribed', 'recipes', 'recipes_count']
+        self.assertCountEqual(response.data.keys(), keys)
+
+    def test_subscribe_exists(self):
+        response = self.client.post(self.author_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_subscribe_non_auth(self):
+        self.client.logout()
+        response = self.client.post(self.non_author_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+@override_settings(MEDIA_ROOT=MEDIA_ROOT)
+class UsersDELETESubscriptionsTests(APITestCase):
+    fixtures = FIXTURES
+
+    URL = '/api/users/'
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.get(id=2)
+        cls.author = (User.objects.filter(following__user_id=cls.user.id)
+                      .all()[0])
+        cls.non_author = (User.objects.exclude(following__user_id=cls.user.id)
+                          .all()[0])
+        cls.author_url = f'{cls.URL}{cls.author.id}/subscribe/'
+        cls.non_author_url = f'{cls.URL}{cls.non_author.id}/subscribe/'
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(MEDIA_ROOT, ignore_errors=True)
+        super().tearDownClass()
+
+    def setUp(self) -> None:
+        self.client.force_authenticate(self.user)
+
+    def test_delete_subscription(self):
+        response = self.client.delete(self.author_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(
+            self.user.follower.filter(author_id=self.author.id).exists(),
+            msg='Subscription still exists!'
+        )
+
+    def test_delete_non_exists_subscription(self):
+        response = self.client.delete(self.non_author_url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_delete_subscription_non_auth(self):
+        self.client.logout()
+        response = self.client.delete(self.author_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
