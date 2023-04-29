@@ -85,7 +85,7 @@ class UsersGETTests(APITestCase):
         response1 = self.client.get(f'{self.URL}?limit={self.USERS_QUANTITY}')
         self.assertEqual(len(response1.data['results']), self.USERS_QUANTITY,
                          'Query param <limit> works incorrectly!')
-        half_index = self.USERS_QUANTITY // 2
+        half_index = len(self.users) // 2
         username1 = response1.data['results'][half_index]['username']
         response2 = self.client.get(f'{self.URL}?page=2&limit={half_index}')
         username2 = response2.data['results'][0]['username']
@@ -93,19 +93,19 @@ class UsersGETTests(APITestCase):
                                                '<limit> works incorrectly!')
 
     def test_retrieve_non_auth_status_code(self):
-        user_id = self.USERS_QUANTITY // 2 + 1
+        user_id = self.users[len(self.users) // 2 + 1].id
         response = self.client.get(f'{self.URL}{user_id}/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_retrieve_non_exists_status_code(self):
-        user_id = self.USERS_QUANTITY + 1
+        user_id = User.objects.last().id + 1
         response = self.client.get(f'{self.URL}{user_id}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_retrieve_result_keys(self):
         user = self.users[0]
         self.client.force_authenticate(user)
-        user_id = self.USERS_QUANTITY // 2 + 1
+        user_id = self.users[len(self.users) // 2 + 1].id
         response = self.client.get(f'{self.URL}{user_id}/')
         keys = ['id', 'username', 'email',
                 'first_name', 'last_name', 'is_subscribed']
@@ -115,7 +115,7 @@ class UsersGETTests(APITestCase):
     def test_retrieve_result_values(self):
         user = self.users[0]
         self.client.force_authenticate(user)
-        user_id = self.USERS_QUANTITY // 2 + 1
+        user_id = self.users[len(self.users) // 2 + 1].id
         response = self.client.get(f'{self.URL}{user_id}/')
         user = User.objects.get(id=user_id)
         keys = ['id', 'username', 'email',
@@ -132,16 +132,16 @@ class UsersGETTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_me_status_code(self):
-        user_id = self.USERS_QUANTITY // 2 + 1
-        user = self.users[user_id]
+        user_index = self.USERS_QUANTITY // 2 + 1
+        user = self.users[user_index]
         self.client.force_authenticate(user)
         response = self.client.get(f'{self.URL}me/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.client.logout()
 
     def test_me_result_keys(self):
-        user_id = self.USERS_QUANTITY // 2 + 1
-        user = self.users[user_id]
+        user_index = self.USERS_QUANTITY // 2 + 1
+        user = self.users[user_index]
         self.client.force_authenticate(user)
         response = self.client.get(f'{self.URL}me/')
         keys = ['id', 'username', 'email',
@@ -150,8 +150,8 @@ class UsersGETTests(APITestCase):
         self.client.logout()
 
     def test_me_result_values(self):
-        user_id = self.USERS_QUANTITY // 2 + 1
-        user = self.users[user_id]
+        user_index = self.USERS_QUANTITY // 2 + 1
+        user = self.users[user_index]
         self.client.force_authenticate(user)
         response = self.client.get(f'{self.URL}me/')
         keys = ['id', 'username', 'email',

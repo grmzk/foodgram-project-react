@@ -80,6 +80,6 @@ class IngredientsTests(APITestCase):
         self.assertDictEqual(json.loads(response.content), ingred_dict)
 
     def test_retrieve_non_exists_status_code(self):
-        ingred_id = self.INGREDS_QUANTITY + 1
+        ingred_id = Ingredient.objects.last().id + 1
         response = self.client.get(f'{self.URL}{ingred_id}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

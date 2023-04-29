@@ -8,9 +8,10 @@ Docker-контейнер для развертывания проекта Foodg
 - Python 3.10
 - Django 4.1
 - Django REST Framework 3.14.0
+- Gunicorn 20.1.0
 - Docker
-- PostgreSQL 13.0
-- Nginx 1.21.3
+- PostgreSQL 15.2
+- Nginx 1.24.0
 
 ##### Как запустить проект:
 
@@ -45,9 +46,9 @@ docker-compose up -d
 Выполнить поочереди (только после первой сборки):
 
 ```
-docker-compose exec web python manage.py migrate
-docker-compose exec web python manage.py createsuperuser
-docker-compose exec web python manage.py collectstatic --no-input
+docker-compose exec backend python manage.py migrate
+docker-compose exec backend python manage.py createsuperuser
+docker-compose exec backend python manage.py collectstatic --no-input
 ```
 
 ##### Эндпоинты

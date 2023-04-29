@@ -70,6 +70,6 @@ class TagsTests(APITestCase):
         self.assertDictEqual(json.loads(response.content), tag_dict)
 
     def test_retrieve_non_exists_status_code(self):
-        tag_id = self.TAGS_QUANTITY + 1
+        tag_id = Tag.objects.last().id + 1
         response = self.client.get(f'{self.URL}{tag_id}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

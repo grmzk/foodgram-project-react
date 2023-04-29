@@ -1,5 +1,6 @@
 backend/media/
 backend/dumpdata.sh
+infra/docker-exec.sh
 
 
 # Byte-compiled / optimized / DLL files
