@@ -1,5 +1,13 @@
 ![Workflow Result](https://github.com/grmzk/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
 
+[Проект на Yandex.Cloud](http://62.84.120.127/)
+
+*username:* admin
+
+*email:* admin@fake.fake
+
+*password:* 123
+
 # Foodgram (docker-container)
 Docker-контейнер для развертывания проекта Foodgram (ресурс для публикации 
 кулинарных рецептов)

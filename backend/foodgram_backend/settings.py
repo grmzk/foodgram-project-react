@@ -29,11 +29,13 @@ SECRET_KEY = (
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+SERVER_URL = 'http://62.84.120.127'
+
 ALLOWED_HOSTS = ['*']
 CSRF_TRUSTED_ORIGINS = [
-    'http://localhost/',
-    'http://127.0.0.1/',
-    'http://62.84.120.127/'
+    'http://localhost',
+    'http://127.0.0.1',
+    SERVER_URL
 ]
 
 
@@ -147,7 +149,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = f'{SERVER_URL}/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
 # Default primary key field type
@@ -158,7 +160,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
 
-MEDIA_URL = 'http://127.0.0.1/media/'
+MEDIA_URL = f'{SERVER_URL}/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 REST_FRAMEWORK = {
