@@ -242,7 +242,7 @@ class RecipesPOSTTests(APITestCase):
         response = self.client.post(self.URL, data=self.RECIPE_DATA)
         self.RECIPE_DATA['tags'][0] = true_id
         self.client.logout()
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_non_exists_ingredient_status_code(self):
         user = User.objects.get(id=3)
@@ -254,7 +254,7 @@ class RecipesPOSTTests(APITestCase):
         response = self.client.post(self.URL, data=self.RECIPE_DATA)
         self.RECIPE_DATA['ingredients'][0]['id'] = true_id
         self.client.logout()
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_adding_recipe_fields_length_error(self):
         user = User.objects.get(id=3)
@@ -346,7 +346,7 @@ class RecipesPATCHTests(APITestCase):
         recipe_changed_data = self.recipe_changed_data.copy()
         recipe_changed_data['tags'][0] = Tag.objects.latest('id').id + 1
         response = self.client.patch(self.url, data=recipe_changed_data)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_non_exists_ingredient_status_code(self):
         recipe_changed_data = self.recipe_changed_data.copy()
@@ -354,7 +354,7 @@ class RecipesPATCHTests(APITestCase):
             Ingredient.objects.latest('id').id + 1
         )
         response = self.client.patch(self.url, data=recipe_changed_data)
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_invalid_ingredient_amount_status_code(self):
         recipe_changed_data = self.recipe_changed_data.copy()

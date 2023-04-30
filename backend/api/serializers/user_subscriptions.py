@@ -1,9 +1,9 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
 
 from users.models import User
 
 from ..serializers import RecipeSerializer
+from ..validators import integer_validator
 
 
 class UserSubscriptionsSerializer(serializers.ModelSerializer):
@@ -21,11 +21,8 @@ class UserSubscriptionsSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         self.recipes_limit = kwargs.pop('recipes_limit', None)
         if self.recipes_limit:
-            try:
-                self.recipes_limit = int(self.recipes_limit)
-            except ValueError:
-                raise ValidationError('Query param `recipes_limit` '
-                                      'must be integer!')
+            self.recipes_limit = integer_validator('recipes_limit',
+                                                   self.recipes_limit)
         super().__init__(*args, **kwargs)
 
     def to_representation(self, instance):

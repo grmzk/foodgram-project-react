@@ -54,6 +54,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
+    def perform_destroy(self, recipe):
+        for ingredient_amount in recipe.ingredients.all():
+            if ingredient_amount.recipes.count() == 1:
+                ingredient_amount.delete()
+        recipe.delete()
+
     @staticmethod
     def gen_shopping_cart_content(recipes):
         header = ('---------СПИСОК ПОКУПОК---------\n'
