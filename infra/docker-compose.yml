@@ -9,10 +9,7 @@ services:
       - ../frontend/:/app/result_build/
 
   backend:
-    #image: grmzk/foodgram_backend:latest
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: grmzk/foodgram_backend:latest
     restart: always
     volumes:
       - static_value:/app/static/

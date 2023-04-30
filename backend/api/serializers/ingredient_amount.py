@@ -4,6 +4,10 @@ from recipes.models import IngredientAmount
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
+    id = serializers.PrimaryKeyRelatedField(
+        source='ingredient.id',
+        read_only=True
+    )
     name = serializers.StringRelatedField(
         source='ingredient.name',
         read_only=True

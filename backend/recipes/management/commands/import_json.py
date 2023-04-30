@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 
 from recipes.models import Ingredient, MeasurementUnit
 
-INGREDIENTS_FILE = '../data/ingredients.json'
+INGREDIENTS_FILE = 'static/ingredients.json'
 
 
 class Command(BaseCommand):
