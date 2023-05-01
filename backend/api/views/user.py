@@ -11,7 +11,7 @@ from ..permissions import IsAuthOrListOnlyPermission
 from ..serializers import (UserSerializer, UserSetPasswordSerializer,
                            UserSubscriptionsSerializer)
 from ..utils import is_subscribed
-from ..viewsets import ListRetrieveCreateModelViewSet
+from ..mixins import ListRetrieveCreateModelViewSet
 
 
 class UserViewSet(ListRetrieveCreateModelViewSet):
