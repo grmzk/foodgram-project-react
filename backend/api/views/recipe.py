@@ -12,7 +12,7 @@ from users.models import User
 
 from ..filters import RecipeFilter
 from ..paginations import PageNumberLimitPagination
-from ..permissions import IsAuthorOrGetOrPost
+from ..permissions import IsAuthorOrGet
 from ..serializers import RecipeSerializer
 from ..utils import is_subscribed
 
@@ -24,7 +24,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filter_backends = [rest_framework.DjangoFilterBackend]
     filterset_class = RecipeFilter
     permission_classes = [permissions.IsAuthenticatedOrReadOnly,
-                          IsAuthorOrGetOrPost]
+                          IsAuthorOrGet]
 
     def get_queryset(self):
         current_user = self.request.user
