@@ -25,3 +25,4 @@ social-auth-app-django==5.2.0
 social-auth-core==4.4.2
 sqlparse==0.4.4
 urllib3==1.26.15
+drf_base64==2.0

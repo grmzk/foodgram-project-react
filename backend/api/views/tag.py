@@ -2,8 +2,8 @@ from rest_framework import permissions
 
 from recipes.models import Tag
 
-from ..serializers import TagSerializer
 from ..mixins import ListRetrieveModelViewSet
+from ..serializers import TagSerializer
 
 
 class TagViewSet(ListRetrieveModelViewSet):

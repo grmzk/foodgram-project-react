@@ -2,8 +2,8 @@ from rest_framework import permissions
 
 from recipes.models import Ingredient
 
-from ..serializers import IngredientSerializer
 from ..mixins import ListRetrieveModelViewSet
+from ..serializers import IngredientSerializer
 
 
 class IngredientViewSet(ListRetrieveModelViewSet):

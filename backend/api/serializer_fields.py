@@ -1,6 +1,3 @@
-import base64
-
-from django.core.files.base import ContentFile
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 
@@ -34,13 +31,3 @@ class IngredientsRelatedField(serializers.PrimaryKeyRelatedField):
 class TagsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
     def to_representation(self, value):
         return TagSerializer(context=self.context, instance=value).data
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if not (isinstance(data, str) and data.startswith('data:image')):
-            raise ValidationError('Image must be in base64 format!')
-        image_format, image_str = data.split(';base64,')
-        ext = image_format.split('/')[-1]
-        data = ContentFile(base64.b64decode(image_str), name='image.' + ext)
-        return super().to_internal_value(data)

@@ -6,12 +6,12 @@ from rest_framework.response import Response
 
 from users.models import Subscription, User
 
+from ..mixins import ListRetrieveCreateModelViewSet
 from ..paginations import PageNumberLimitPagination
 from ..permissions import IsAuthOrListOnlyPermission
 from ..serializers import (UserSerializer, UserSetPasswordSerializer,
                            UserSubscriptionsSerializer)
 from ..utils import is_subscribed
-from ..mixins import ListRetrieveCreateModelViewSet
 
 
 class UserViewSet(ListRetrieveCreateModelViewSet):

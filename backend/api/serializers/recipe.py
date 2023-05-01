@@ -1,9 +1,10 @@
+from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
 
 from recipes.models import IngredientAmount, Recipe, Tag
 from recipes.validators import min_cooking_time_validator
 
-from ..serializer_fields import (Base64ImageField, IngredientsRelatedField,
+from ..serializer_fields import (IngredientsRelatedField,
                                  TagsPrimaryKeyRelatedField)
 from ..serializers import DynamicFieldsModelSerializer
 from ..serializers.user import UserSerializer
