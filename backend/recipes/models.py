@@ -224,6 +224,12 @@ class IngredientRecipe(models.Model):
         verbose_name = 'Ингредиент с количеством'
         verbose_name_plural = 'Ингредиенты с количеством'
         ordering = ['ingredient']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['ingredient', 'recipe'],
+                name='unique_ingredient_recipe'
+            ),
+        ]
 
     def __str__(self):
         return (f'{self.ingredient.name} - {self.amount} '
