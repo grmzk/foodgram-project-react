@@ -1,6 +1,6 @@
 from .dynamic_fields_serializer import DynamicFieldsModelSerializer
 from .ingredient import IngredientSerializer
-from .ingredient_amount import IngredientAmountSerializer
+from .ingredient_recipe import IngredientRecipeSerializer
 from .recipe import RecipeSerializer
 from .tag import TagSerializer
 from .user import UserSerializer

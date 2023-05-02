@@ -1,7 +1,7 @@
 from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
 
-from recipes.models import IngredientAmount, Recipe, Tag
+from recipes.models import IngredientRecipe, Recipe, Tag
 from recipes.validators import min_cooking_time_validator
 
 from ..serializer_fields import (IngredientsRelatedField,
@@ -15,7 +15,8 @@ class RecipeSerializer(DynamicFieldsModelSerializer):
     tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
     image = Base64ImageField()
     ingredients = IngredientsRelatedField(
-        queryset=IngredientAmount.objects.all(),
+        source='ingredient_recipe',
+        queryset=IngredientRecipe.objects.all(),
         many=True,
     )
     cooking_time = serializers.IntegerField(

@@ -48,19 +48,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return (Recipe.objects
                 .prefetch_related(author_prefetch)
                 .prefetch_related('tags')
-                .prefetch_related('ingredients__ingredient'
-                                  '__measurement_unit')
+                .prefetch_related('ingredient_recipe'
+                                  '__ingredient__measurement_unit')
                 .annotate(is_favorited=is_favorited)
                 .annotate(is_in_shopping_cart=is_in_shopping_cart))
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
-    def perform_destroy(self, recipe):
-        for ingredient_amount in recipe.ingredients.all():
-            if ingredient_amount.recipes.count() == 1:
-                ingredient_amount.delete()
-        recipe.delete()
 
     @staticmethod
     def gen_shopping_cart_content(recipes):
@@ -70,10 +64,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
                   '-----------FOODGRAM(\u2184)----------')
         data = dict()
         for recipe in recipes:
-            for ingredient_amount in recipe.ingredients.all():
-                ingredient = ingredient_amount.ingredient
+            for ingredient_recipe in recipe.ingredient_recipe.all():
+                ingredient = ingredient_recipe.ingredient
                 data[ingredient] = (
-                    data.get(ingredient, 0) + ingredient_amount.amount
+                    data.get(ingredient, 0) + ingredient_recipe.amount
                 )
         body = str()
         for ingredient, amount in data.items():
@@ -86,8 +80,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[permissions.IsAuthenticated])
     def download_shopping_cart_action(self, request):
         recipes = (Recipe.objects.filter(shopping_cart__user=request.user)
-                   .prefetch_related('ingredients__ingredient'
-                                     '__measurement_unit').all())
+                   .prefetch_related('ingredient_recipe'
+                                     '__ingredient__measurement_unit')
+                   .all())
         content = self.gen_shopping_cart_content(recipes)
         filename = f'{request.user.username}_shopping_cart.txt'
         headers = {

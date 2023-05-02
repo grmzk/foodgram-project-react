@@ -14,7 +14,7 @@ FIXTURES = [
     f'{TEST_FIXTURES_DIR}/test_subscription.json',
     f'{TEST_FIXTURES_DIR}/test_measurement_unit.json',
     f'{TEST_FIXTURES_DIR}/test_ingredient.json',
-    f'{TEST_FIXTURES_DIR}/test_ingredient_amount.json',
+    f'{TEST_FIXTURES_DIR}/test_ingredient_recipe.json',
     f'{TEST_FIXTURES_DIR}/test_tag.json',
     f'{TEST_FIXTURES_DIR}/test_recipe.json',
     f'{TEST_FIXTURES_DIR}/test_shopping_cart.json',
@@ -139,13 +139,13 @@ class RecipesGETTests(APITestCase):
                               'works incorrectly!')
         self.client.logout()
 
-        tags = Tag.objects.filter(slug__in=['sour', 'salty']).all()
+        tags = Tag.objects.filter(slug__in=['breakfast', 'salty']).all()
         tags_recipes = set()
         for tag in tags:
             tags_recipes = tags_recipes.union(
                 set(tag.recipes.values_list('name', flat=True))
             )
-        response = self.client.get(f'{self.URL}?tags=sour&tags=salty')
+        response = self.client.get(f'{self.URL}?tags=breakfast&tags=salty')
         response_recipes = list()
         for recipe in response.data['results']:
             response_recipes.append(recipe['name'])
@@ -298,8 +298,9 @@ class RecipesPATCHTests(APITestCase):
         for ingredient in cls.recipe_changed_data['ingredients']:
             ingredients.append(
                 {
-                    'id': ingredient.ingredient.id,
-                    'amount': ingredient.amount,
+                    'id': ingredient.id,
+                    'amount': ingredient.ingredient_recipe
+                                        .get(recipe=cls.recipe).amount,
                 }
             )
         cls.recipe_changed_data['image'] = (

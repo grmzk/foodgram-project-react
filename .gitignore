@@ -1,4 +1,5 @@
 backend/media/
+backend/static/
 backend/dumpdata.sh
 infra/docker-exec.sh
 

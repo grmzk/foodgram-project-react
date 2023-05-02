@@ -14,9 +14,11 @@ FIXTURES = [
     f'{TEST_FIXTURES_DIR}/test_subscription.json',
     f'{TEST_FIXTURES_DIR}/test_measurement_unit.json',
     f'{TEST_FIXTURES_DIR}/test_ingredient.json',
-    f'{TEST_FIXTURES_DIR}/test_ingredient_amount.json',
+    f'{TEST_FIXTURES_DIR}/test_ingredient_recipe.json',
     f'{TEST_FIXTURES_DIR}/test_tag.json',
     f'{TEST_FIXTURES_DIR}/test_recipe.json',
+    f'{TEST_FIXTURES_DIR}/test_shopping_cart.json',
+    f'{TEST_FIXTURES_DIR}/test_favorite.json',
 ]
 MEDIA_ROOT = tempfile.mkdtemp()
 

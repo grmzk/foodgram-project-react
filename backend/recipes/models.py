@@ -82,30 +82,6 @@ class Ingredient(models.Model):
         return f'{self.name} [{self.measurement_unit}]'
 
 
-class IngredientAmount(models.Model):
-    ingredient = models.ForeignKey(
-        Ingredient,
-        verbose_name='Ингредиент',
-        related_name='ingredient_amounts',
-        on_delete=models.CASCADE,
-        blank=False,
-    )
-    amount = models.PositiveIntegerField(
-        verbose_name='Количество',
-        validators=[min_amount_validator],
-        blank=False,
-    )
-
-    class Meta:
-        verbose_name = 'Ингредиент с количеством'
-        verbose_name_plural = 'Ингредиенты с количеством'
-        ordering = ['ingredient']
-
-    def __str__(self):
-        return (f'{self.ingredient.name} - {self.amount} '
-                f'{self.ingredient.measurement_unit.name}')
-
-
 class Recipe(models.Model):
     name = models.CharField(
         verbose_name='Название',
@@ -140,7 +116,8 @@ class Recipe(models.Model):
         blank=False
     )
     ingredients = models.ManyToManyField(
-        IngredientAmount,
+        Ingredient,
+        through='IngredientRecipe',
         verbose_name='Ингредиенты',
         related_name='recipes',
         blank=True,
@@ -220,3 +197,34 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f'{self.user} favorite: {self.recipe}'
+
+
+class IngredientRecipe(models.Model):
+    ingredient = models.ForeignKey(
+        Ingredient,
+        verbose_name='Ингредиент',
+        related_name='ingredient_recipe',
+        on_delete=models.CASCADE,
+        blank=False,
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        verbose_name='Рецепт',
+        related_name='ingredient_recipe',
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    amount = models.PositiveIntegerField(
+        verbose_name='Количество',
+        validators=[min_amount_validator],
+        blank=False,
+    )
+
+    class Meta:
+        verbose_name = 'Ингредиент с количеством'
+        verbose_name_plural = 'Ингредиенты с количеством'
+        ordering = ['ingredient']
+
+    def __str__(self):
+        return (f'{self.ingredient.name} - {self.amount} '
+                f'{self.ingredient.measurement_unit.name}')

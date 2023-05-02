@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
-from recipes.models import IngredientAmount
+from recipes.models import IngredientRecipe
 
 
-class IngredientAmountSerializer(serializers.ModelSerializer):
+class IngredientRecipeSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         source='ingredient.id',
         read_only=True
@@ -20,4 +20,4 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ['id', 'name', 'measurement_unit', 'amount']
         read_only_fields = fields
-        model = IngredientAmount
+        model = IngredientRecipe
