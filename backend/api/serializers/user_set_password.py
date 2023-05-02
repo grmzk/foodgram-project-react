@@ -1,10 +1,13 @@
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 
 class UserSetPasswordSerializer(serializers.Serializer):
-    new_password = serializers.CharField(max_length=150, required=True,
-                                         write_only=True)
+    new_password = serializers.CharField(max_length=150,
+                                         required=True,
+                                         write_only=True,
+                                         validators=[validate_password])
     current_password = serializers.CharField(max_length=150, required=True,
                                              write_only=True)
 

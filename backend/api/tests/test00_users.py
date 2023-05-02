@@ -173,7 +173,7 @@ class UsersPOSTTests(APITestCase):
         'email': 'user1@fake.fake',
         'first_name': 'Name1',
         'last_name': 'Family1',
-        'password': 'password1',
+        'password': 'kLX-zRS-sPU-BQy',
     }
     REG_FIELDS_MAX_LENGTH = {
         'username': 150,
