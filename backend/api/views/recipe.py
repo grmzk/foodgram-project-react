@@ -7,7 +7,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import Recipe, ShoppingCart
+from recipes.models import Favorite, Recipe, ShoppingCart
 from users.models import User
 
 from ..filters import RecipeFilter
@@ -38,7 +38,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         is_in_shopping_cart = Value(False)
         if not current_user.is_anonymous:
             is_favorited = (
-                Exists(current_user.favorite.filter(id=OuterRef('id')))
+                Exists(current_user.favorite.filter(recipe_id=OuterRef('id')))
             )
             is_in_shopping_cart = (
                 Exists(current_user.shopping_cart.filter(
@@ -126,10 +126,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[permissions.IsAuthenticated])
     def favorite_action(self, request, pk):
         recipe = get_object_or_404(self.get_queryset(), id=pk)
-        if recipe in request.user.favorite.all():
+        if request.user.favorite.filter(recipe_id=pk).exists():
             data = {'errors': 'Recipe is already in the favorite!'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
-        request.user.favorite.add(recipe)
+        Favorite.objects.create(user=request.user, recipe=recipe)
         fields = ['id', 'name', 'image', 'cooking_time']
         serializer = self.get_serializer(recipe, fields=fields)
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
@@ -137,8 +137,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @favorite_action.mapping.delete
     def favorite_delete_action(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
-        if recipe not in request.user.favorite.all():
+        favorite = Favorite.objects.filter(user_id=request.user.id,
+                                           recipe_id=recipe.id)
+        if not favorite.exists():
             data = {'errors': 'Recipe is not in favorite!'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
-        request.user.favorite.remove(recipe)
+        favorite.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

@@ -18,6 +18,7 @@ FIXTURES = [
     f'{TEST_FIXTURES_DIR}/test_tag.json',
     f'{TEST_FIXTURES_DIR}/test_recipe.json',
     f'{TEST_FIXTURES_DIR}/test_shopping_cart.json',
+    f'{TEST_FIXTURES_DIR}/test_favorite.json',
 ]
 MEDIA_ROOT = tempfile.mkdtemp()
 
@@ -118,7 +119,8 @@ class RecipesGETTests(APITestCase):
 
         user = User.objects.get(id=2)
         self.client.force_authenticate(user)
-        user_recipes = list(user.favorite.values_list('name', flat=True))
+        user_recipes = list(Recipe.objects.filter(favorite__user=user)
+                            .values_list('name', flat=True))
         response = self.client.get(f'{self.URL}?is_favorited=1')
         response_recipes = list()
         for recipe in response.data['results']:
@@ -331,7 +333,7 @@ class RecipesPATCHTests(APITestCase):
 
     def test_change_recipe_non_author(self):
         self.client.logout()
-        other_user = User.objects.get(id=1)
+        other_user = User.objects.get(id=3)
         self.client.force_authenticate(other_user)
         response = self.client.patch(self.url, data=self.recipe_changed_data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
@@ -549,12 +551,10 @@ class RecipesPOSTFavoriteTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.get(id=2)
-        cls.favorite_recipe = cls.user.favorite.all()[0]
-        cls.non_favorite_recipe = None
-        for recipe in Recipe.objects.all():
-            if recipe not in cls.user.favorite.all():
-                cls.non_favorite_recipe = recipe
-                break
+        cls.favorite_recipe = (Recipe.objects
+                               .filter(favorite__user=cls.user)[0])
+        cls.non_favorite_recipe = (Recipe.objects
+                                   .exclude(favorite__user=cls.user)[0])
         cls.non_favorite_url = (f'{cls.URL}{cls.non_favorite_recipe.id}'
                                 '/favorite/')
         cls.favorite_url = f'{cls.URL}{cls.favorite_recipe.id}/favorite/'
@@ -571,7 +571,8 @@ class RecipesPOSTFavoriteTests(APITestCase):
         response = self.client.post(self.non_favorite_url)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(
-            self.user.favorite.filter(id=self.non_favorite_recipe.id).exists()
+            self.user.favorite.filter(recipe_id=self.non_favorite_recipe.id)
+            .exists()
         )
         keys = ['id', 'name', 'image', 'cooking_time']
         self.assertCountEqual(response.data.keys(), keys)
@@ -595,12 +596,10 @@ class RecipesDELETEFavoriteTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.get(id=2)
-        cls.favorite_recipe = cls.user.favorite.all()[0]
-        cls.non_favorite_recipe = None
-        for recipe in Recipe.objects.all():
-            if recipe not in cls.user.favorite.all():
-                cls.non_favorite_recipe = recipe
-                break
+        cls.favorite_recipe = (Recipe.objects
+                               .filter(favorite__user=cls.user)[0])
+        cls.non_favorite_recipe = (Recipe.objects
+                                   .exclude(favorite__user=cls.user)[0])
         cls.non_favorite_url = (f'{cls.URL}{cls.non_favorite_recipe.id}'
                                 '/favorite/')
         cls.favorite_url = f'{cls.URL}{cls.favorite_recipe.id}/favorite/'
@@ -617,7 +616,8 @@ class RecipesDELETEFavoriteTests(APITestCase):
         response = self.client.delete(self.favorite_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(
-            self.user.favorite.filter(id=self.favorite_recipe.id).exists()
+            self.user.favorite.filter(recipe_id=self.favorite_recipe.id)
+            .exists()
         )
 
     def test_delete_non_exists_recipe_from_favorite(self):

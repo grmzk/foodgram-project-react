@@ -1,12 +1,13 @@
 from django.contrib import admin
 
-from recipes.models import (Ingredient, IngredientAmount, MeasurementUnit,
-                            Recipe, ShoppingCart, Tag)
+from recipes.models import (Favorite, Ingredient, IngredientAmount,
+                            MeasurementUnit, Recipe, ShoppingCart, Tag)
 
 admin.site.register(Tag)
 admin.site.register(MeasurementUnit)
 admin.site.register(IngredientAmount)
 admin.site.register(ShoppingCart)
+admin.site.register(Favorite)
 
 
 @admin.register(Recipe)
@@ -15,13 +16,12 @@ class RecipeAdmin(admin.ModelAdmin):
     search_fields = list_filter
     list_display = ['name', 'author']
     fields = ['pub_date', 'name', 'text', 'cooking_time', 'image', 'author',
-              'tags', ('in_favorite', 'in_favorite_count'),
-              'ingredients']
+              'tags', 'in_favorite_count', 'ingredients']
     readonly_fields = ['pub_date', 'in_favorite_count']
 
     @staticmethod
     def in_favorite_count(obj):
-        return obj.in_favorite.count()
+        return obj.favorite.count()
 
 
 @admin.register(Ingredient)

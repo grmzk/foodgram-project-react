@@ -1,0 +1,1 @@
+[{"model": "recipes.favorite", "pk": 1, "fields": {"user": 2, "recipe": 3}}, {"model": "recipes.favorite", "pk": 2, "fields": {"user": 2, "recipe": 4}}, {"model": "recipes.favorite", "pk": 3, "fields": {"user": 12, "recipe": 4}}]
