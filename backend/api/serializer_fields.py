@@ -24,12 +24,10 @@ class IngredientsRelatedField(serializers.RelatedField):
         if not Ingredient.objects.filter(id=data['id']).exists():
             raise ValidationError(f'Ingredient with `id=={data["id"]}` '
                                   'not exists!')
-        ingredient_recipe, _ = self.queryset.get_or_create(
-            ingredient_id=data['id'],
-            recipe_id=None,
-            amount=data['amount']
-        )
-        return ingredient_recipe
+        # Creating orphans objects that will be adopted
+        # when serializer's create or update methods done.
+        return (self.queryset.create(ingredient_id=data['id'],
+                                     amount=data['amount']))
 
 
 class TagsPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
