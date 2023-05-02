@@ -7,7 +7,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from recipes.models import Recipe
+from recipes.models import Recipe, ShoppingCart
 from users.models import User
 
 from ..filters import RecipeFilter
@@ -41,7 +41,9 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 Exists(current_user.favorite.filter(id=OuterRef('id')))
             )
             is_in_shopping_cart = (
-                Exists(current_user.shopping_cart.filter(id=OuterRef('id')))
+                Exists(current_user.shopping_cart.filter(
+                    recipe_id=OuterRef('id'))
+                )
             )
         return (Recipe.objects
                 .prefetch_related(author_prefetch)
@@ -65,7 +67,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         header = ('---------СПИСОК ПОКУПОК---------\n'
                   '================================\n')
         footer = ('================================\n'
-                  '----------FOODGRAM (\u2184)----------')
+                  '-----------FOODGRAM(\u2184)----------')
         data = dict()
         for recipe in recipes:
             for ingredient_amount in recipe.ingredients.all():
@@ -83,7 +85,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             url_path='download_shopping_cart',
             permission_classes=[permissions.IsAuthenticated])
     def download_shopping_cart_action(self, request):
-        recipes = (request.user.shopping_cart
+        recipes = (Recipe.objects.filter(shopping_cart__user=request.user)
                    .prefetch_related('ingredients__ingredient'
                                      '__measurement_unit').all())
         content = self.gen_shopping_cart_content(recipes)
@@ -100,10 +102,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[permissions.IsAuthenticated])
     def shopping_cart_action(self, request, pk):
         recipe = get_object_or_404(self.get_queryset(), id=pk)
-        if recipe in request.user.shopping_cart.all():
+        if request.user.shopping_cart.filter(recipe_id=pk).exists():
             data = {'errors': 'Recipe is already in the shopping cart!'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
-        request.user.shopping_cart.add(recipe)
+        ShoppingCart.objects.create(user=request.user, recipe=recipe)
         fields = ['id', 'name', 'image', 'cooking_time']
         serializer = self.get_serializer(recipe, fields=fields)
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
@@ -111,10 +113,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @shopping_cart_action.mapping.delete
     def shopping_cart_delete_action(self, request, pk):
         recipe = get_object_or_404(Recipe, id=pk)
-        if recipe not in request.user.shopping_cart.all():
+        shopping_cart = ShoppingCart.objects.filter(user_id=request.user.id,
+                                                    recipe_id=recipe.id)
+        if not shopping_cart.exists():
             data = {'errors': 'Recipe is not in the shopping cart!'}
             return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
-        request.user.shopping_cart.remove(recipe)
+        shopping_cart.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=True, methods=['post'],

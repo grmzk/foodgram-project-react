@@ -139,12 +139,6 @@ class Recipe(models.Model):
         related_name='recipes',
         blank=False
     )
-    in_shopping_cart = models.ManyToManyField(
-        User,
-        verbose_name='В списке покупок',
-        related_name='shopping_cart',
-        blank=True,
-    )
     in_favorite = models.ManyToManyField(
         User,
         verbose_name='В избранном',
@@ -170,3 +164,34 @@ class Recipe(models.Model):
 
     def __str__(self):
         return f'Рецепт "{self.name}"'
+
+
+class ShoppingCart(models.Model):
+    user = models.ForeignKey(
+        User,
+        verbose_name='Пользователь',
+        related_name='shopping_cart',
+        on_delete=models.CASCADE,
+        blank=False,
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        verbose_name='Рецепт',
+        related_name='shopping_cart',
+        on_delete=models.CASCADE,
+        blank=False,
+    )
+
+    class Meta:
+        verbose_name = 'Корзина покупок'
+        verbose_name_plural = 'Корзины покупок'
+        ordering = ['user']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_shopping_cart'
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user} [{self.recipe}]'

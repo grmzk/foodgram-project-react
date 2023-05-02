@@ -17,6 +17,7 @@ FIXTURES = [
     f'{TEST_FIXTURES_DIR}/test_ingredient_amount.json',
     f'{TEST_FIXTURES_DIR}/test_tag.json',
     f'{TEST_FIXTURES_DIR}/test_recipe.json',
+    f'{TEST_FIXTURES_DIR}/test_shopping_cart.json',
 ]
 MEDIA_ROOT = tempfile.mkdtemp()
 
@@ -125,7 +126,8 @@ class RecipesGETTests(APITestCase):
         self.assertCountEqual(response_recipes, user_recipes,
                               'Query param <is_favorited> works incorrectly!')
 
-        user_recipes = list(user.shopping_cart.values_list('name', flat=True))
+        user_recipes = list(Recipe.objects.filter(shopping_cart__user=user)
+                            .values_list('name', flat=True))
         response = self.client.get(f'{self.URL}?is_in_shopping_cart=1')
         response_recipes = list()
         for recipe in response.data['results']:
@@ -432,12 +434,10 @@ class RecipesPOSTShoppingCartTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.get(id=2)
-        cls.sc_recipe = cls.user.shopping_cart.all()[0]
-        cls.non_sc_recipe = None
-        for recipe in Recipe.objects.all():
-            if recipe not in cls.user.shopping_cart.all():
-                cls.non_sc_recipe = recipe
-                break
+        cls.sc_recipe = (Recipe.objects
+                         .filter(shopping_cart__user=cls.user)[0])
+        cls.non_sc_recipe = (Recipe.objects
+                             .exclude(shopping_cart__user=cls.user)[0])
         cls.non_sc_url = f'{cls.URL}{cls.non_sc_recipe.id}/shopping_cart/'
         cls.sc_url = f'{cls.URL}{cls.sc_recipe.id}/shopping_cart/'
 
@@ -453,7 +453,8 @@ class RecipesPOSTShoppingCartTests(APITestCase):
         response = self.client.post(self.non_sc_url)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(
-            self.user.shopping_cart.filter(id=self.non_sc_recipe.id).exists()
+            self.user.shopping_cart.filter(recipe_id=self.non_sc_recipe.id)
+            .exists()
         )
         keys = ['id', 'name', 'image', 'cooking_time']
         self.assertCountEqual(response.data.keys(), keys)
@@ -477,12 +478,10 @@ class RecipesDELETEShoppingCartTests(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = User.objects.get(id=2)
-        cls.sc_recipe = cls.user.shopping_cart.all()[0]
-        cls.non_sc_recipe = None
-        for recipe in Recipe.objects.all():
-            if recipe not in cls.user.shopping_cart.all():
-                cls.non_sc_recipe = recipe
-                break
+        cls.sc_recipe = (Recipe.objects
+                         .filter(shopping_cart__user=cls.user)[0])
+        cls.non_sc_recipe = (Recipe.objects
+                             .exclude(shopping_cart__user=cls.user)[0])
         cls.non_sc_url = f'{cls.URL}{cls.non_sc_recipe.id}/shopping_cart/'
         cls.sc_url = f'{cls.URL}{cls.sc_recipe.id}/shopping_cart/'
 
@@ -498,7 +497,8 @@ class RecipesDELETEShoppingCartTests(APITestCase):
         response = self.client.delete(self.sc_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(
-            self.user.shopping_cart.filter(id=self.sc_recipe.id).exists()
+            self.user.shopping_cart.filter(recipe_id=self.sc_recipe.id)
+            .exists()
         )
 
     def test_delete_non_exists_recipe_from_shopping_cart(self):
