@@ -1,5 +1,6 @@
 from drf_base64.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.fields import empty
 from rest_framework.serializers import ValidationError
 
 from recipes.models import IngredientRecipe, Recipe, Tag
@@ -39,16 +40,28 @@ class RecipeSerializer(DynamicFieldsModelSerializer):
         instance.ingredient_recipe.all().delete()
         return super().update(instance, validated_data)
 
+    def run_validation(self, data=empty):
+        try:
+            return super().run_validation(data)
+        except Exception as error:
+            ingredients = data.get('ingredients', None)
+            if ingredients:
+                # Deleting orphans which created
+                # in IngredientsRelatedField's to_internal_value() method.
+                for ingredient in ingredients:
+                    IngredientRecipe.objects.filter(
+                        ingredient_id=ingredient['id'],
+                        amount=ingredient['amount'],
+                        recipe=None,
+                    ).delete()
+            raise error
+
     @staticmethod
     def validate_ingredients(ingredients):
         ingredient_ids = list()
         for ingredient_recipe in ingredients:
             ingredient_id = ingredient_recipe.ingredient.id
             if ingredient_id in ingredient_ids:
-                # Deleting orphans which created
-                # in IngredientsRelatedField's to_internal_value() method.
-                for item in ingredients:
-                    item.delete()
                 raise ValidationError('Two identical ingredients found!')
             ingredient_ids.append(ingredient_id)
         return ingredients
