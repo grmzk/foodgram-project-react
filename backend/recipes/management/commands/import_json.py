@@ -11,8 +11,8 @@ INGREDIENTS_FILE = 'static/ingredients.json'
 class Command(BaseCommand):
     help = 'Import data from JSON-files to database'
 
-    def import_ingredients(self):
-
+    @staticmethod
+    def import_ingredients():
         with open(INGREDIENTS_FILE) as file:
             json_obj = json.load(file)
             for item in json_obj:
