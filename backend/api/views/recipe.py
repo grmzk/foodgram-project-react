@@ -3,7 +3,7 @@ from django.db.models.expressions import Value
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters import rest_framework
-from rest_framework import permissions, status, viewsets
+from rest_framework import permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
@@ -11,13 +11,14 @@ from recipes.models import Favorite, Recipe, ShoppingCart
 from users.models import User
 
 from ..filters import RecipeFilter
+from ..mixins import NonPartialUpdateModelViewSet
 from ..paginations import PageNumberLimitPagination
 from ..permissions import IsAuthorOrGet
 from ..serializers import RecipeSerializer
 from ..utils import is_subscribed
 
 
-class RecipeViewSet(viewsets.ModelViewSet):
+class RecipeViewSet(NonPartialUpdateModelViewSet):
     serializer_class = RecipeSerializer
     http_method_names = ['get', 'post', 'patch', 'delete']
     pagination_class = PageNumberLimitPagination
