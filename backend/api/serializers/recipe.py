@@ -14,7 +14,7 @@ from ..serializers.user import UserSerializer
 class RecipeSerializer(DynamicFieldsModelSerializer):
     author = UserSerializer(read_only=True)
     tags = TagsPrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
-    image = Base64ImageField()
+    image = Base64ImageField(required=False)
     ingredients = IngredientsRelatedField(
         source='ingredient_recipe',
         queryset=IngredientRecipe.objects.all(),
