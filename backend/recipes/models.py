@@ -120,7 +120,7 @@ class Recipe(models.Model):
         through='IngredientRecipe',
         verbose_name='Ингредиенты',
         related_name='recipes',
-        blank=True,
+        blank=False,
     )
     pub_date = models.DateTimeField(
         verbose_name='Дата публикации',
