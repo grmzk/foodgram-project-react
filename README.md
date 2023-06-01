@@ -1,13 +1,5 @@
 ![Workflow Result](https://github.com/grmzk/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
 
-[Проект на Yandex.Cloud](http://62.84.120.127/)
-
-*username:* admin
-
-*email:* admin@fake.fake
-
-*password:* 123
-
 # Foodgram (docker-container)
 Docker-контейнер для развертывания проекта Foodgram (ресурс для публикации 
 кулинарных рецептов)
@@ -17,9 +9,9 @@ Docker-контейнер для развертывания проекта Foodg
 - Django 4.1
 - Django REST Framework 3.14.0
 - Gunicorn 20.1.0
-- Docker
 - PostgreSQL 15.2
 - Nginx 1.24.0
+- Docker
 
 ##### Как запустить проект:
 
